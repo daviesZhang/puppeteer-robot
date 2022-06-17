@@ -1,0 +1,6 @@
+[source,npm]
+----
+nx generate @nrwl/node:library util-puppeteer
+
+----
+
