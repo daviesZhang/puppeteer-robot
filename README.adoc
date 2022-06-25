@@ -2,5 +2,18 @@
 ----
 nx generate @nrwl/node:library util-puppeteer
 
+
+nx g nx-electron:app puppeteer-robot-electron --frontendProject=puppeteer-robot-web
+
+
+nx g @nrwl/js:lib robot-api --publishable --importPath="puppeteer-robot-api"
+
+
 ----
+构建
+electron: nx run puppeteer-robot-electron:package
+
+
+为electron构建 web
+nx build --base-href=./ --project=puppeteer-robot-web
 

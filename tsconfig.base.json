@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@puppeteer-robot/util-puppeteer": ["libs/util-puppeteer/src/index.ts"]
+      "@robot/robot-api": ["libs/robot-api/src/index.ts"],
+      "@robot/util-puppeteer": ["libs/util-puppeteer/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

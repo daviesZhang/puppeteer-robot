@@ -1,0 +1,53 @@
+ {
+  "root": "apps/puppeteer-robot-electron",
+  "sourceRoot": "apps/puppeteer-robot-electron/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx-electron:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/puppeteer-robot-electron",
+        "main": "apps/puppeteer-robot-electron/src/main.ts",
+        "tsConfig": "apps/puppeteer-robot-electron/tsconfig.app.json",
+        "assets": ["apps/puppeteer-robot-electron/src/assets"]
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/puppeteer-robot-electron/src/environments/environment.ts",
+              "with": "apps/puppeteer-robot-electron/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      }
+    },
+    "serve": {
+      "executor": "nx-electron:execute",
+      "options": {
+        "buildTarget": "puppeteer-robot-electron:build"
+      }
+    },
+    "package": {
+      "executor": "nx-electron:package",
+      "options": {
+        "name": "puppeteer-robot-electron",
+        "frontendProject": "puppeteer-robot-web",
+        "outputPath": "dist/packages",
+        "prepackageOnly": true
+      }
+    },
+    "make": {
+      "executor": "nx-electron:make",
+      "options": {
+        "name": "puppeteer-robot-electron",
+        "frontendProject": "puppeteer-robot-web",
+        "outputPath": "dist/executables"
+      }
+    }
+  }
+}

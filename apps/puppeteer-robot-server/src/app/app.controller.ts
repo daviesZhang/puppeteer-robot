@@ -1,19 +1,18 @@
-import {Controller, Get} from '@nestjs/common';
+import {Controller, Get, InjectionToken, Type} from '@nestjs/common';
 
 import {AppService} from './app.service';
 import {
-  CloseBrowser,
-  Context,
-  InputText,
-  OpenBrowser,
-  OpenPage, puppeteerUtils,
+  Context, StepAction, StepInterceptor,
+  CloseBrowser, InputText, OpenBrowser, OpenPage, Step, ScriptCase, StepHandler
+} from "@robot/robot-api";
+import {
+  DefaultContext,
+
+  puppeteerUtils,
   Run,
-  ScriptCase,
-  Step,
-  StepHandler,
-  StepInterceptor,
-  StepType
-} from "@puppeteer-robot/util-puppeteer";
+
+
+} from "@robot/util-puppeteer";
 import {Observable, tap} from 'rxjs';
 
 class LogInterceptor implements StepInterceptor {
@@ -46,12 +45,13 @@ export class AppController {
     };
     const testCase = new ScriptCase("test", [openBrowser, openPage, inputText, closeBrowser]);
     const puppeteer = await puppeteerUtils();
-    const context = puppeteer.get(Context);
+
+    const context =await puppeteer.resolve(DefaultContext);
+
 
     context.stepInterceptor.push(new LogInterceptor());
     const run = new Run(context, testCase);
     return run.run();
-
   }
 
 

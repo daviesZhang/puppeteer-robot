@@ -2,7 +2,10 @@
   "$schema": "./node_modules/nx/schemas/workspace-schema.json",
   "version": 2,
   "projects": {
+    "puppeteer-robot-electron": "apps/puppeteer-robot-electron",
     "puppeteer-robot-server": "apps/puppeteer-robot-server",
+    "puppeteer-robot-web": "apps/puppeteer-robot-web",
+    "robot-api": "libs/robot-api",
     "util-puppeteer": "libs/util-puppeteer"
   }
 }

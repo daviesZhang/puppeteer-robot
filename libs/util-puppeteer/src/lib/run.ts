@@ -1,23 +1,6 @@
 import {concat, concatMap, Observable, of} from "rxjs";
-import {Context, StepAction, StepHandler, StepInterceptor} from "./step-action";
-import {Step} from "./step";
-
-
-/**
- * 用例
- */
-export class ScriptCase {
-  name: string;
-  steps: Step[];
-  options?: Record<string, unknown>;
-
-
-  constructor(name: string, steps: Step[]) {
-    this.name = name;
-    this.steps = steps;
-  }
-}
-
+import {DefaultContext} from "./step-action";
+import {ActionResult, ScriptCase, Step, StepAction, StepHandler, StepInterceptor} from "@robot/robot-api";
 
 
 export class InterceptorHandler implements StepHandler {
@@ -29,7 +12,7 @@ export class InterceptorHandler implements StepHandler {
     this.interceptor = interceptor;
   }
 
-  handle(step: Step, context: Context) {
+  handle(step: Step, context: DefaultContext) {
     return this.interceptor.intercept(step, context, this.next);
   }
 }
@@ -44,7 +27,7 @@ export class InterceptingHandler implements StepHandler {
     this.interceptors = interceptors;
   }
 
-  handle(step: Step, context: Context) {
+  handle(step: Step, context: DefaultContext) {
     const chain = this.interceptors
       .reduceRight((next, interceptor) => new InterceptorHandler(next, interceptor),
         this.backend);
@@ -60,7 +43,7 @@ class BackendStepHandler implements StepHandler {
     this.action = action;
   }
 
-  handle(step: Step, context: Context): Observable<unknown> {
+  handle(step: Step, context: DefaultContext): Observable<ActionResult<Step>> {
     return of(true).pipe(concatMap(() => this.action.run(step, context)))
   }
 }
@@ -70,27 +53,28 @@ class BackendStepHandler implements StepHandler {
  */
 export class Run {
 
-  context: Context;
+  context: DefaultContext;
   scriptCase: ScriptCase;
 
 
-  constructor(context: Context, scriptCase: ScriptCase) {
+  constructor(context: DefaultContext, scriptCase: ScriptCase) {
     this.context = context;
     this.scriptCase = scriptCase;
   }
 
 
-  run(): Observable<unknown> {
+  run(): Observable<ActionResult<Step>> {
     const steps = this.scriptCase.steps;
     const context = this.context;
     const actions = context.actions;
+    const stepInterceptor = context.stepInterceptor;
 
-    const actions$ = [];
+    const actions$:Observable<ActionResult<Step>>[] = [];
     for (const step of steps) {
       const action = actions.find(action => action.support(step));
       const result$ = new InterceptingHandler(
         new BackendStepHandler(action),
-        context.stepInterceptor || []
+        stepInterceptor
       ).handle(step, context);
       actions$.push(result$);
     }
