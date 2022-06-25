@@ -1,11 +1,18 @@
 import {Module} from "@nestjs/common";
-import {CloseBrowserAction, DefaultContext, InputTextAction, OpenBrowserAction, OpenPageAction} from "./step-action";
+import {
+  CloseBrowserAction,
+  DefaultContext,
+  InputTextAction,
+  OpenBrowserAction,
+  OpenPageAction,
+  PutParamsAction
+} from "./step-action";
 
 
 @Module({
 
   providers: [OpenBrowserAction,
-    CloseBrowserAction,OpenPageAction,InputTextAction,DefaultContext],
+    CloseBrowserAction,OpenPageAction,PutParamsAction,InputTextAction,DefaultContext],
 })
 export class PuppeteerModule {
 

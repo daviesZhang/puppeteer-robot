@@ -12,7 +12,7 @@ export enum StepType {
   CLICK_ELEMENT,
   CLICK_LINK,
   PUT_PARAMS,
-  FIND_PARAMS,
+
 
 }
 
@@ -99,18 +99,7 @@ export class PutParams implements Step{
   }
 }
 
-export class FindParams implements Step{
-  name: string;
-  type: StepType;
-  key: string;
 
-
-  constructor(name: string,key:string) {
-    this.name = name;
-    this.key = key;
-    this.type = StepType.FIND_PARAMS;
-  }
-}
 
 export  interface Context {
   stepInterceptor: StepInterceptor[];

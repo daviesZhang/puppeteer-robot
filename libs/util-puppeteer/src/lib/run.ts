@@ -43,8 +43,37 @@ class BackendStepHandler implements StepHandler {
     this.action = action;
   }
 
+  paramsReplace(value: string, params: Map<string, unknown>): string {
+    const regx = new RegExp("(?<!\\$)(\\$\\{(\\w+)})", "g");
+    let rest = regx.exec(value);
+    let newString = value;
+    while (rest != null) {
+      const [str, , key] = rest;
+      const newValue: string = (params.get(key) || '') as string;
+      newString = newString.replace(str, newValue);
+      rest = regx.exec(value);
+    }
+    return newString;
+  }
+
   handle(step: Step, context: DefaultContext): Observable<ActionResult<Step>> {
-    return of(true).pipe(concatMap(() => this.action.run(step, context)))
+    return of(true).pipe(concatMap(() => {
+      Object.keys(step).forEach(key => {
+        const value = step[key];
+        if (typeof value === 'string') {
+          step[key] = this.paramsReplace(value, context.runParams);
+        }
+      });
+      const options = step.options;
+      if (options) {
+        Object.keys(options).forEach(key => {
+          const value = options[key];
+          if (typeof value === 'string') {
+            options[key] = this.paramsReplace(value, context.runParams);
+          }
+        });
+      }
+      return this.action.run(step, context);}))
   }
 }
 
@@ -67,14 +96,12 @@ export class Run {
     const steps = this.scriptCase.steps;
     const context = this.context;
     const actions = context.actions;
-    const stepInterceptor = context.stepInterceptor;
-
-    const actions$:Observable<ActionResult<Step>>[] = [];
+    const actions$: Observable<ActionResult<Step>>[] = [];
     for (const step of steps) {
       const action = actions.find(action => action.support(step));
       const result$ = new InterceptingHandler(
         new BackendStepHandler(action),
-        stepInterceptor
+        context.stepInterceptor || []
       ).handle(step, context);
       actions$.push(result$);
     }

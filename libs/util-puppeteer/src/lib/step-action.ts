@@ -92,13 +92,14 @@ export class PutParamsAction implements StepAction<PutParams> {
     const {selector, value, key, text} = step;
     if (!selector) {
       context.runParams.set(key, value);
-      return of(resultSuccess(begin, step));
+      return of(resultSuccess(begin, step, value));
     }
     return from(context.page.$eval<string>(
       selector, (el: HTMLInputElement) => text ? el.innerText : el.value))
       .pipe(tap(next => context.runParams.set(key, next)),
         map(next => resultSuccess(begin, step, next)));
   }
+
   support(step: OpenBrowser): boolean {
     return step.type === StepType.PUT_PARAMS;
   }
@@ -128,8 +129,9 @@ export class DefaultContext implements Context {
   constructor(private openBrowser: OpenBrowserAction,
               private openPage: OpenPageAction,
               private inputText: InputTextAction,
+              private putParams: PutParamsAction,
               private closeBrowser: CloseBrowserAction) {
-    this._actions = [openBrowser, openPage, inputText, closeBrowser];
+    this._actions = [openBrowser, openPage, putParams, inputText, closeBrowser];
 
   }
 
