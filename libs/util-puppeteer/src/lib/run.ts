@@ -98,6 +98,7 @@ export class Run {
     const actions = context.actions;
     const actions$: Observable<ActionResult<Step>>[] = [];
     for (const step of steps) {
+
       const action = actions.find(action => action.support(step));
       const result$ = new InterceptingHandler(
         new BackendStepHandler(action),

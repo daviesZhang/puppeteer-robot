@@ -31,14 +31,14 @@ export class NxWelcomeComponent implements OnInit {
     const openBrowser = new OpenBrowser("open_browser");
     const openPage = new OpenPage("open_page", "https://cn.bing.com/");
     const inputText = new InputText("input", "#sb_form_q", "test${name}x");
-    const closeBrowser = new CloseBrowser("关掉");
+    const closeBrowser = new CloseBrowser("关掉${name}");
 
 
     openBrowser.options = {
       headless: false,
       executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     };
-    const testCase = new ScriptCase("test", [openBrowser, putParams, openPage, inputText]);
+    const testCase = new ScriptCase("test", [openBrowser, putParams, openPage, inputText,closeBrowser]);
 
     window.electron.run(testCase,
       [],

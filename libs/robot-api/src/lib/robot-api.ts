@@ -12,6 +12,9 @@ export enum StepType {
   CLICK_ELEMENT,
   CLICK_LINK,
   PUT_PARAMS,
+  STRUCT_IF,
+  STRUCT_ELSE,
+  STRUCT_ENDIF
 
 
 }
@@ -25,6 +28,38 @@ export declare interface Step {
   options?: unknown;
 }
 
+class StructIf implements Step{
+  name: string;
+  type: StepType;
+
+
+  constructor(name: string) {
+    this.name = name;
+    this.type = StepType.STRUCT_IF;
+  }
+}
+
+class StructElse implements Step{
+  name: string;
+  type: StepType;
+
+
+  constructor(name: string) {
+    this.name = name;
+    this.type = StepType.STRUCT_ELSE;
+  }
+}
+
+class StructEndif implements Step{
+  name: string;
+  type: StepType;
+
+
+  constructor(name: string) {
+    this.name = name;
+    this.type = StepType.STRUCT_ENDIF;
+  }
+}
 
 export class OpenBrowser implements Step {
   name: string;
