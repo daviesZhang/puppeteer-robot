@@ -5,14 +5,25 @@ import {
   InputTextAction,
   OpenBrowserAction,
   OpenPageAction,
-  PutParamsAction
+  PutParamsAction,
+  StructElseAction,
+  StructEndIfAction,
+  StructEndwhileAction,
+  StructIfAction,
+  StructWhileAction,
+  WaitAction
 } from "./step-action";
 
 
 @Module({
 
   providers: [OpenBrowserAction,
-    CloseBrowserAction,OpenPageAction,PutParamsAction,InputTextAction,DefaultContext],
+    StructElseAction,
+    StructIfAction,
+    StructWhileAction,
+    StructEndwhileAction,WaitAction,
+    StructEndIfAction,
+    CloseBrowserAction, OpenPageAction, PutParamsAction, InputTextAction, DefaultContext],
 })
 export class PuppeteerModule {
 

@@ -14,7 +14,10 @@ export enum StepType {
   PUT_PARAMS,
   STRUCT_IF,
   STRUCT_ELSE,
-  STRUCT_ENDIF
+  STRUCT_ENDIF,
+  STRUCT_WHILE,
+  STRUCT_ENDWHILE,
+  WAIT
 
 
 }
@@ -28,18 +31,56 @@ export declare interface Step {
   options?: unknown;
 }
 
-class StructIf implements Step{
+export class Wait implements Step {
+  name: string;
+  type: StepType;
+  selectorOrTimeout: string | number;
+  options?: unknown;
+
+  constructor(name: string, selectorOrTimeout: string | number) {
+    this.name = name;
+    this.selectorOrTimeout = selectorOrTimeout;
+    this.type = StepType.WAIT;
+  }
+}
+
+export class StructWhile implements Step {
+  name: string;
+  type: StepType;
+  expression: string;
+
+  constructor(name: string, expression: string) {
+    this.name = name;
+    this.expression = expression;
+    this.type = StepType.STRUCT_WHILE;
+  }
+}
+
+
+export class StructEndwhile implements Step {
   name: string;
   type: StepType;
 
 
   constructor(name: string) {
     this.name = name;
+    this.type = StepType.STRUCT_ENDWHILE;
+  }
+}
+
+export class StructIf implements Step {
+  name: string;
+  type: StepType;
+  expression: string;
+
+  constructor(name: string, expression: string) {
+    this.name = name;
+    this.expression = expression;
     this.type = StepType.STRUCT_IF;
   }
 }
 
-class StructElse implements Step{
+export class StructElse implements Step {
   name: string;
   type: StepType;
 
@@ -50,7 +91,7 @@ class StructElse implements Step{
   }
 }
 
-class StructEndif implements Step{
+export class StructEndIf implements Step {
   name: string;
   type: StepType;
 
@@ -91,9 +132,12 @@ export class CloseBrowser implements Step {
 export class InputText implements Step {
   name: string;
   type: StepType;
-
+  /**
+   * 是否采用输入追加的方式
+   */
+  append = true;
   selector: string;
-
+  options?: { delay: number };
   text: string;
 
 
@@ -118,25 +162,30 @@ export class OpenPage implements Step {
   }
 }
 
-export class PutParams implements Step{
+export class PutParams implements Step {
   name: string;
   type: StepType;
-  //true从selector text中获取内容,false获取value
-  text = false;
+
   key: string;
   selector?: string;
   value?: string;
+  //true从selector text中获取内容,false获取value
+  text = false;
 
-  constructor(name: string,key:string) {
+  expression = true;
+
+  constructor(name: string, key: string, value?: string) {
     this.name = name;
     this.key = key;
     this.type = StepType.PUT_PARAMS;
+    this.value = value;
   }
+
+
 }
 
 
-
-export  interface Context {
+export interface Context {
   stepInterceptor: StepInterceptor[];
 
   options?: Record<string, unknown>;
@@ -162,6 +211,8 @@ export interface ActionResult<R> {
   begin: number;
   end: number;
   step: R;
+  data?: unknown;
+
   [key: string]: unknown;
 }
 
@@ -173,15 +224,16 @@ export interface StepAction<R extends Step> {
   support(step: R): boolean;
 }
 
-export interface IScriptCase{
+export interface IScriptCase {
   name: string;
   steps: Step[];
   options?: Record<string, unknown>;
 }
+
 /**
  * 用例
  */
-export class ScriptCase implements IScriptCase{
+export class ScriptCase implements IScriptCase {
   name: string;
   steps: Step[];
   options?: Record<string, unknown>;

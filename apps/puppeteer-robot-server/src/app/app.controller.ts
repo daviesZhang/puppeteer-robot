@@ -1,29 +1,9 @@
-import {Controller, Get, InjectionToken, Type} from '@nestjs/common';
+import {Controller, Get} from '@nestjs/common';
 
 import {AppService} from './app.service';
-import {
-  Context, StepAction, StepInterceptor,
-  CloseBrowser, InputText, OpenBrowser, OpenPage, Step, ScriptCase, StepHandler
-} from "@robot/robot-api";
-import {
-  DefaultContext,
+import {CloseBrowser, InputText, OpenBrowser, OpenPage, ScriptCase} from "@robot/robot-api";
+import {DefaultContext, puppeteerUtils, Run,} from "@robot/util-puppeteer";
 
-  puppeteerUtils,
-  Run,
-
-
-} from "@robot/util-puppeteer";
-import {Observable, tap} from 'rxjs';
-
-class LogInterceptor implements StepInterceptor {
-  intercept(step: Step, context: Context, handler: StepHandler): Observable<unknown> {
-    console.log(`准备执行${step.type}-${step.name}`);
-    return handler.handle(step, context).pipe(tap(next=>{
-      console.log("执行完成一个~");
-    }));
-  }
-
-}
 
 @Controller()
 export class AppController {
@@ -49,7 +29,7 @@ export class AppController {
     const context =await puppeteer.resolve(DefaultContext);
 
 
-    context.stepInterceptor.push(new LogInterceptor());
+ //   context.stepInterceptor.push(new LogInterceptor());
     const run = new Run(context, testCase);
     return run.run();
   }

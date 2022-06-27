@@ -1,11 +1,26 @@
 import * as puppeteer from "puppeteer-core";
 import {Browser, Page} from "puppeteer-core";
-import {from, map, Observable, of, switchMap, tap} from "rxjs";
-
+import {from, map, Observable, of, switchMap, tap, timer} from "rxjs";
+import * as vm from "vm";
 import {Injectable, Scope} from "@nestjs/common";
 import {
-  Context, StepAction, StepInterceptor,
-  CloseBrowser, InputText, OpenBrowser, OpenPage, Step, StepType, ActionResult, PutParams
+  ActionResult,
+  CloseBrowser,
+  Context,
+  InputText,
+  OpenBrowser,
+  OpenPage,
+  PutParams,
+  Step,
+  StepAction,
+  StepInterceptor,
+  StepType,
+  StructElse,
+  StructEndIf,
+  StructEndwhile,
+  StructIf,
+  StructWhile,
+  Wait
 } from "@robot/robot-api";
 
 
@@ -71,6 +86,11 @@ export class InputTextAction implements StepAction<InputText> {
   run(step: InputText, context: DefaultContext): Observable<ActionResult<InputText>> {
     const begin = new Date().getTime();
     const selector = step.selector;
+    const append = step.append;
+    if (append) {
+      return from(context.page.type(selector, step.text, step.options))
+        .pipe(map(next => resultSuccess(begin, step)));
+    }
     return from(context.page.$eval(selector,
       (element, text: string) =>
         element.setAttribute("value", text),
@@ -89,10 +109,16 @@ export class InputTextAction implements StepAction<InputText> {
 export class PutParamsAction implements StepAction<PutParams> {
   run(step: PutParams, context: DefaultContext): Observable<ActionResult<PutParams>> {
     const begin = new Date().getTime();
-    const {selector, value, key, text} = step;
+    const {selector, value, key, text, expression} = step;
+
     if (!selector) {
-      context.runParams.set(key, value);
-      return of(resultSuccess(begin, step, value));
+      let _value = value;
+      if (expression) {
+        _value = vm.runInNewContext(value);
+      }
+      context.runParams.set(key,_value);
+
+      return of(resultSuccess(begin, step, _value));
     }
     return from(context.page.$eval<string>(
       selector, (el: HTMLInputElement) => text ? el.innerText : el.value))
@@ -102,6 +128,98 @@ export class PutParamsAction implements StepAction<PutParams> {
 
   support(step: OpenBrowser): boolean {
     return step.type === StepType.PUT_PARAMS;
+  }
+}
+
+
+@Injectable()
+export class StructIfAction implements StepAction<StructIf> {
+  run(step: StructIf, context: DefaultContext): Observable<ActionResult<StructIf>> {
+    const begin = new Date().getTime();
+    const success = !!vm.runInNewContext(step.expression, {});
+    return of(resultSuccess(begin, step, success));
+  }
+
+  support(step: StructIf): boolean {
+    return step.type === StepType.STRUCT_IF;
+  }
+}
+
+@Injectable()
+export class StructElseAction implements StepAction<StructElse> {
+  run(step: StructElse, context: DefaultContext): Observable<ActionResult<StructElse>> {
+    const begin = new Date().getTime();
+    return of(resultSuccess(begin, step));
+  }
+
+  support(step: StructIf): boolean {
+    return step.type === StepType.STRUCT_ELSE;
+  }
+}
+
+@Injectable()
+export class StructEndIfAction implements StepAction<StructEndIf> {
+  run(step: StructEndIf, context: DefaultContext): Observable<ActionResult<StructEndIf>> {
+    const begin = new Date().getTime();
+    return of(resultSuccess(begin, step));
+  }
+
+  support(step: StructIf): boolean {
+    return step.type === StepType.STRUCT_ENDIF;
+  }
+}
+
+
+@Injectable()
+export class StructWhileAction implements StepAction<StructWhile> {
+  run(step: StructWhile, context: DefaultContext): Observable<ActionResult<StructWhile>> {
+    const begin = new Date().getTime();
+
+    const success = !!vm.runInNewContext(step.expression, {});
+    return of(resultSuccess(begin, step, success));
+  }
+
+  support(step: StructIf): boolean {
+    return step.type === StepType.STRUCT_WHILE;
+  }
+}
+
+@Injectable()
+export class StructEndwhileAction implements StepAction<StructEndwhile> {
+  run(step: StructEndwhile, context: DefaultContext): Observable<ActionResult<StructEndwhile>> {
+    const begin = new Date().getTime();
+    return of(resultSuccess(begin, step));
+  }
+
+  support(step: StructIf): boolean {
+    return step.type === StepType.STRUCT_ENDWHILE;
+  }
+}
+
+@Injectable()
+export class WaitAction implements StepAction<Wait> {
+  run(step: Wait, context: DefaultContext): Observable<ActionResult<Wait>> {
+    const begin = new Date().getTime();
+    const selectorOrTimeout = step.selectorOrTimeout;
+    if (typeof selectorOrTimeout === "string"&&context.page) {
+      if (selectorOrTimeout.startsWith("//")) {
+      // const options = (step.options || {}) as any;
+
+        return from( context.page.waitForXPath(selectorOrTimeout))
+          .pipe(map(() => resultSuccess(begin, step)));
+      }else{
+     //  const options = (step.options || {}) as any;
+        return from(context.page.waitForSelector(selectorOrTimeout))
+          .pipe(map(() => resultSuccess(begin, step)));
+      }
+    }else if (typeof selectorOrTimeout ==="number"){
+      return timer(selectorOrTimeout).pipe(map(next => resultSuccess(begin, step)));
+    }else{
+      return of(resultSuccess(begin, step));
+    }
+  }
+  support(step: Wait): boolean {
+    return step.type === StepType.WAIT;
   }
 }
 
@@ -118,9 +236,9 @@ export class DefaultContext implements Context {
 
   options?: Record<string, unknown>;
 
-  browser?: Browser;
+  browser!: Browser;
 
-  page?: Page;
+  page!: Page;
 
   [key: string]: unknown;
 
@@ -129,9 +247,20 @@ export class DefaultContext implements Context {
   constructor(private openBrowser: OpenBrowserAction,
               private openPage: OpenPageAction,
               private inputText: InputTextAction,
+              private structEndif: StructEndIfAction,
+              private structIf: StructIfAction,
+              private waitAction: WaitAction,
+              private structElse: StructElseAction,
+              private structWhile: StructWhileAction,
+              private structEndwhile: StructEndwhileAction,
               private putParams: PutParamsAction,
               private closeBrowser: CloseBrowserAction) {
-    this._actions = [openBrowser, openPage, putParams, inputText, closeBrowser];
+    this._actions = [openBrowser,waitAction, openPage, putParams,
+      structEndif,
+      structIf,
+      structWhile,
+      structEndwhile,
+      structElse, inputText, closeBrowser];
 
   }
 

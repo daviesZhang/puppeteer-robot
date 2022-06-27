@@ -25,7 +25,7 @@ contextBridge.exposeInMainWorld('electron', {
       switchMap(context => {
         context.stepInterceptor.push(...interceptors);
         const run = new Run(context, scriptCase);
-        return run.run().pipe(tap(next=>handle(next)),zipWith());
+        return run.run().pipe(tap(next=>handle&&handle(next)),zipWith());
       })
     ));
 
